@@ -52,7 +52,7 @@ def create_byweather_df(df):
     return weather_df
 
 # Load cleaned data
-day_clean_df = pd.read_csv("main_data.csv")
+day_clean_df = pd.read_csv("day.csv")
 hour_df = pd.read_csv("hour.csv")
 
 # Filter data
@@ -193,6 +193,7 @@ plt.legend(title="Tahun", loc="upper right")
 for container in ax.containers:
     ax.bar_label(container, fontsize=8, color='white', weight='bold', label_type='edge')
 plt.tight_layout()
+st.pyplot(fig)
 with st.expander('Keterangan'):
     st.write(
         """
@@ -203,4 +204,4 @@ with st.expander('Keterangan'):
         `3`: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
         """
     )
-st.pyplot(fig)
+    
