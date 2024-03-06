@@ -52,14 +52,14 @@ def create_byweather_df(df):
     return weather_df
 
 # Load cleaned data
-day_clean_df = pd.read_csv("day.csv")
-hour_df = pd.read_csv("hour.csv")
+bike_day = pd.read_csv("day.csv")
+bike_hour = pd.read_csv("hour.csv")
 
 # Filter data
-day_clean_df["dteday"] = pd.to_datetime(day_clean_df["dteday"])
-hour_df["dteday"] = pd.to_datetime(hour_df["dteday"])
-min_date = day_clean_df["dteday"].min()
-max_date = day_clean_df["dteday"].max()
+bike_day["dteday"] = pd.to_datetime(bike_day["dteday"])
+bike_hour["dteday"] = pd.to_datetime(bike_hour["dteday"])
+min_date = bike_day["dteday"].min()
+max_date = bike_day["dteday"].max()
 
 with st.sidebar:
     # Menambahkan logo 
@@ -73,11 +73,11 @@ with st.sidebar:
         value=[min_date, max_date]
     )
 
-main_df = day_clean_df[(day_clean_df["dteday"] >= str(start_date)) & 
-                       (day_clean_df["dteday"] <= str(end_date))]
+main_df = bike_day[(bike_day["dteday"] >= str(start_date)) & 
+                    (bike_day["dteday"] <= str(end_date))]
 
-second_df = hour_df[(hour_df["dteday"] >= str(start_date)) & 
-                       (hour_df["dteday"] <= str(end_date))]
+second_df = bike_hour[(bike_hour["dteday"] >= str(start_date)) & 
+                    (bike_hour["dteday"] <= str(end_date))]
 
 
 # # Menyiapkan berbagai dataframe
@@ -92,116 +92,52 @@ hourly_df = hourly_df.replace({
     "yr": {0: 2011, 1: 2012}
 })
 
+# Menggabungkan kedua data
+bike_df = bike_hour.merge(bike_day, on='dteday', how='inner', suffixes=('_hour', '_day'))
+
+# Mendefinisikan label cuaca
+weather_labels = {
+    1: 'Jernih',
+    2: 'Kabut',
+    3: 'Curah Hujan Ringan',
+    4: 'Curah Hujan Lebat'
+}
+bike_df['weather_label'] = bike_df['weathersit_day'].map(weather_labels)
+
 st.header('PedalPulse : Bike Sharing Insights')
-# Menampilkan Bagaimana tren terakhir terkait jumlah pengguna baru dengan pengguna casual dalam beberapa tahun terakhir
-st.subheader('Statistik Total Casual Vs Total Registered')
+# Membuat visualisasi rata-rata sewa sepeda per jam
+st.subheader("Statistik Rata - Rata Penyewaan Sepeda Berdasarkan")
+rental_hr = bike_df.groupby('hr')['cnt_hour'].mean()
 fig, ax = plt.subplots()
-index = casual_register_df["yr"]
-bar_width = 0.35
-p1 = ax.bar(index, casual_register_df["total_casual"], bar_width, label="Total Casual", color="#F098A7")
-p2 = ax.bar(index + bar_width, casual_register_df["total_registered"], bar_width, label="Total Registered", color="#CCE9FF")
-ax.set_xlabel("Year")
-ax.set_ylabel("Jumlah")
-ax.set_title("Total Casual vs Total Registered by Year")
-ax.set_xticks(index + bar_width / 2)
-ax.set_xticklabels(casual_register_df["yr"])
-ax.legend()
-for p in p1 + p2:
-    height = p.get_height()
-    ax.text(p.get_x() + p.get_width() / 2., height + 1, str(int(height)), ha="center")
-plt.tight_layout()
-st.pyplot(plt.gcf())
-
-
-st.subheader("Statistik Pola Total Penyewaan Sepeda Berdasarkan Bulan")
-fig, ax = plt.subplots()
-palette = sns.color_palette("pastel")
-sns.lineplot(data=monthly_df, x="mnth", y="cnt", hue="yr", palette=palette, marker="o")
-plt.xlabel("Urutan Bulan")
-plt.ylabel("Jumlah")
-plt.title("Jumlah total sepeda yang disewakan berdasarkan Bulan dan tahun")
-plt.legend(title="Tahun", loc="upper right")  
-plt.xticks(ticks=monthly_df["mnth"], labels=monthly_df["mnth"])
-plt.tight_layout()
-st.pyplot(fig)
-
-st.subheader("Statistik Pola Total Penyewaan Sepeda Berdasarkan Jam")
-fig, ax = plt.subplots()
-sns.lineplot(data=hourly_df, x="hr", y="cnt", hue="yr", palette="pastel", marker="o")
-plt.xlabel("Urutan Jam")
-plt.ylabel("Jumlah")
-plt.title("Jumlah total sepeda yang disewakan berdasarkan Jam dan tahun")
-plt.legend(title="Tahun", loc="upper right")  
-plt.xticks(ticks=hourly_df["hr"], labels=hourly_df["hr"])
-plt.tight_layout()
-st.pyplot(fig)
-
-st.subheader("Statistik total penyewaan sepeda Berdasarkan Hari Libur dan Hari Kerja")
-col_holiday, col_workingday = st.columns([1, 1])
-with col_holiday:
-    fig, ax = plt.subplots()
-    sns.barplot(data=holiday_df, x="holiday", y="cnt", hue="yr", palette="viridis")
-    plt.ylabel("Jumlah")
-    plt.title("Jumlah total sepeda yang disewakan berdasarkan hari Libur")
-    plt.legend(title="Tahun", loc="upper right")  
-    for container in ax.containers:
-        ax.bar_label(container, fontsize=8, color='white', weight='bold', label_type='edge')
-    plt.tight_layout()
-    st.pyplot(fig)
-with col_workingday:
-    fig, ax = plt.subplots()
-    sns.barplot(data=workingday_df, x="workingday", y="cnt", hue="yr", palette="viridis")
-    plt.ylabel("Jumlah")
-    plt.title("Jumlah total sepeda yang disewakan berdasarkan hari Kerja")
-    plt.legend(title="Tahun", loc="upper right")  
-    for container in ax.containers:
-        ax.bar_label(container, fontsize=8, color='white', weight='bold', label_type='edge')
-    plt.tight_layout()
-    st.pyplot(fig)
-        
-# pola yang terjadi pada jumlah total penyewaan sepeda berdasarkan Musim
-st.subheader("Statistik total penyewaan sepeda berdasarkan Musim")
-fig, ax = plt.subplots()
-sns.barplot(data=season_df, x="season", y="cnt", hue="yr", palette="viridis")
-plt.ylabel("Jumlah")
-plt.title("Jumlah total sepeda yang disewakan berdasarkan Musim")
-plt.legend(title="Tahun", loc="upper right")  
-for container in ax.containers:
-    ax.bar_label(container, fontsize=8, color='white', weight='bold', label_type='edge')
+ax.bar(rental_hr.index, rental_hr.values, color='#1E6EB6')
+ax.set_title('Rata - Rata Sewa Sepeda per Jam')
+ax.set_xlabel('Jam')
+ax.set_ylabel('Rata - Rata Sewa')
 plt.tight_layout()
 st.pyplot(fig)
 with st.expander('Keterangan'):
     st.write(
         """
-        `Winter`: Musim Dingin  
-        `Summer`: Musim Panas  
-        `Springer`: Musim Semi  
-        `Fall`: Musim Gugur
+        Rata rata Sewa Sepeda paling banyak terjadi jam 17.00 dan 18.00 atau jam 5 PM dan 6 PM. Dengan jumlah rata-rata sewa sepeda melebihi angka 400. 
+        Namun rata rata sewa sepeda paling sedikit terjadi jam 04.00 atau jam 4 AM. Dengan jumlah rata-rata sewa sepeda kurang lebih 10.
         """
     )
-    
-# pola yang terjadi pada jumlah total penyewaan sepeda berdasarkan Cuaca
-st.subheader("Statistik total penyewaan sepeda berdasarkan Cuaca")
-fig, ax = plt.subplots()
-sns.barplot(data=weather_df, x="weathersit", y="cnt", hue="yr")
-bars = ax.patches
-for bar, color in zip(bars, ['#F098A7', '#CCE9FF'] * (len(bars) // 2)):
-    bar.set_color(color)
-plt.ylabel("Jumlah")
-plt.title("Jumlah total sepeda yang disewakan berdasarkan Cuaca")
-plt.legend(title="Tahun", loc="upper right")  
-for container in ax.containers:
-    ax.bar_label(container, fontsize=8, color='white', weight='bold', label_type='edge')
+
+# Membuat visualisasi rata-rata sewa sepeda berdasarkan kondisi cuaca
+st.subheader("Statistik Rata - Rata Penyewaan Sepeda Berdasarkan Kondisi Cuaca")
+avg_weather = bike_df.groupby('weather_label')['cnt_day'].mean().reset_index().sort_values("cnt_day")
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.barplot(x='weather_label', y='cnt_day', data=avg_weather, hue='weather_label', palette='magma', legend=False)
+ax.set_title('Rata - Rata Sewa Sepeda berdasarkan Kondisi Cuaca')
+ax.set_xlabel('Kondisi Cuaca')
+ax.set_ylabel('Rata - Rata Sewa')
 plt.tight_layout()
 st.pyplot(fig)
 with st.expander('Keterangan'):
     st.write(
         """
-        `1`: Clear, Few clouds, Partly cloudy, Partly cloudy
-        
-        `2`: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
-        
-        `3`: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+        Rata rata sewa sepeda paling banyak terjadi pada kondisi cuaca jernih mencapai angka 4500 lebih. 
+        Namun rata rata sewa sepeda paling sedikit terjadi yakni saat kondisi cuaca hujan ringan hanya mencapai angka 2000 saja. 
+        Dari visualisasi data diatas terlihat bahwa kondisi cuaca sangat berpengaruh terhadap jumlah rata rata penyewaan sepeda.
         """
     )
-    
