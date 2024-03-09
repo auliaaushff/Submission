@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -106,7 +107,7 @@ bike_df['weather_label'] = bike_df['weathersit_day'].map(weather_labels)
 
 st.header('PedalPulse : Bike Sharing Insights')
 # Membuat visualisasi rata-rata sewa sepeda per jam
-st.subheader("Statistik Rata - Rata Penyewaan Sepeda Berdasarkan")
+st.subheader("Statistik Rata - Rata Penyewaan Sepeda Berdasarkan Variasi Sepanjang Hari")
 rental_hr = bike_df.groupby('hr')['cnt_hour'].mean()
 fig, ax = plt.subplots()
 ax.bar(rental_hr.index, rental_hr.values, color='#1E6EB6')
@@ -125,9 +126,9 @@ with st.expander('Keterangan'):
 
 # Membuat visualisasi rata-rata sewa sepeda berdasarkan kondisi cuaca
 st.subheader("Statistik Rata - Rata Penyewaan Sepeda Berdasarkan Kondisi Cuaca")
-avg_weather = bike_df.groupby('weather_label')['cnt_day'].mean().reset_index().sort_values("cnt_day")
+avg_weather = bike_df.groupby('weather_label')['cnt_hour'].mean().reset_index().sort_values("cnt_hour")
 fig, ax = plt.subplots(figsize=(10, 6))
-sns.barplot(x='weather_label', y='cnt_day', data=avg_weather, hue='weather_label', palette='magma', legend=False)
+sns.barplot(x='weather_label', y='cnt_hour', data=avg_weather, hue='weather_label', palette='magma', legend=False)
 ax.set_title('Rata - Rata Sewa Sepeda berdasarkan Kondisi Cuaca')
 ax.set_xlabel('Kondisi Cuaca')
 ax.set_ylabel('Rata - Rata Sewa')
