@@ -3,9 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
+import os
+
+print(os.path.exists("day.csv"))
+print(os.path.exists("hour.csv"))
 
 sns.set(style='dark')
 plt.style.use('dark_background')
+
+print(os.access("day.csv", os.R_OK))
+print(os.access("hour.csv", os.R_OK))
+
 # Helper function yang dibutuhkan untuk menyiapkan berbagai dataframe
 
 def create_casual_register_df(df):
